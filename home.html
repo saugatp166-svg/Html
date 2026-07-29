@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>InstaGram - Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-secondary: #111820;
+    --bg-card: #151d28;
+    --bg-elevated: #1a2332;
+    --fg: #e8edf3;
+    --fg-muted: #6b7d94;
+    --fg-dim: #3d4f63;
+    --accent: #00d4aa;
+    --accent-glow: rgba(0, 212, 170, 0.25);
+    --accent-dark: #00a885;
+    --danger: #ff4757;
+    --warning: #ffa502;
+    --success: #2ed573;
+    --border: rgba(255,255,255,0.06);
+    --glass: rgba(17, 24, 32, 0.85);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --radius-full: 9999px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    --shadow-accent: 0 4px 20px rgba(0, 212, 170, 0.3);
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app-shell {
+    max-width: 430px;
+    margin: 0 auto;
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .bg-atmosphere {
+    position: fixed;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    max-width: 430px;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .bg-atmosphere .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: orbFloat 12s ease-in-out infinite;
+  }
+  .bg-atmosphere .orb:nth-child(1) {
+    width: 300px; height: 300px;
+    background: var(--accent);
+    top: -80px; right: -60px;
+  }
+  .bg-atmosphere .orb:nth-child(2) {
+    width: 200px; height: 200px;
+    background: #ff6b6b;
+    bottom: 100px; left: -40px;
+    animation-delay: -4s;
+    opacity: 0.08;
+  }
+  .bg-atmosphere .orb:nth-child(3) {
+    width: 250px; height: 250px;
+    background: #ffd93d;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: -8s;
+    opacity: 0.05;
+  }
+  @keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(20px, -30px) scale(1.1); }
+    66% { transform: translate(-15px, 20px) scale(0.95); }
+  }
+  .page {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 64px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .page::-webkit-scrollbar { display: none; }
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .top-bar .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .top-bar .logo .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .top-bar .actions { display: flex; gap: 16px; }
+  .top-bar .actions button {
+    background: none; border: none;
+    color: var(--fg); font-size: 20px;
+    cursor: pointer; position: relative;
+    transition: var(--transition);
+  }
+  .top-bar .actions button:hover { color: var(--accent); }
+  .top-bar .actions .badge {
+    position: absolute;
+    top: -4px; right: -6px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: #fff;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border: 2px solid var(--bg);
+  }
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border);
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: var(--fg-dim);
+    font-size: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    position: relative;
+    text-decoration: none;
+  }
+  .nav-item i { font-size: 20px; transition: var(--transition); }
+  .nav-item.active { color: var(--accent); }
+  .nav-item.active i { transform: scale(1.1); }
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 24px; height: 2px;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: var(--transition);
+  }
+  .nav-item.active::before { transform: translateX(-50%) scaleX(1); }
+  .nav-item.upload-btn {
+    position: relative;
+    top: -10px;
+  }
+  .nav-item.upload-btn .upload-icon-wrap {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-accent);
+    transition: var(--transition);
+  }
+  .nav-item.upload-btn:hover .upload-icon-wrap {
+    transform: scale(1.08);
+    box-shadow: 0 6px 28px rgba(0, 212, 170, 0.45);
+  }
+  .nav-item.upload-btn i { color: #fff; font-size: 20px; }
+  .nav-item.upload-btn span { display: none; }
+  .post-card {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+  }
+  .post-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .post-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .post-user-info { flex: 1; }
+  .post-user-info .username {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--fg);
+  }
+  .post-user-info .location {
+    font-size: 11px;
+    color: var(--fg-muted);
+  }
+  .post-more {
+    background: none; border: none;
+    color: var(--fg-muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    transition: var(--transition);
+  }
+  .post-more:hover { color: var(--fg); }
+  .post-image-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--bg-secondary);
+  }
+  .post-image-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  .post-image-wrap:active img { transform: scale(0.98); }
+  .post-double-tap-heart {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 80px;
+    color: #fff;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5));
+    z-index: 5;
+  }
+  .post-double-tap-heart.show {
+    animation: heartBurst 0.8s ease forwards;
+  }
+  @keyframes heartBurst {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+    40% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  }
+  .post-actions {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 16px;
+  }
+  .post-actions .left { display: flex; gap: 14px; flex: 1; }
+  .post-actions button {
+    background: none; border: none;
+    color: var(--fg);
+    font-size: 22px;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 2px;
+  }
+  .post-actions button:hover { transform: scale(1.15); }
+  .post-actions button.liked { color: var(--danger); animation: likePopIn 0.35s ease; }
+  @keyframes likePopIn {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.35); }
+    60% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+  }
+  .post-actions button.bookmarked { color: var(--warning); }
+  .post-likes {
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .post-caption {
+    padding: 0 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--fg-muted);
+  }
+  .post-caption .cap-user { color: var(--fg); font-weight: 600; }
+  .post-comments-peek {
+    padding: 4px 16px 0;
+    font-size: 12px;
+    color: var(--fg-dim);
+    cursor: pointer;
+  }
+  .post-time {
+    padding: 4px 16px 0;
+    font-size: 11px;
+    color: var(--fg-dim);
+  }
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    max-width: 400px;
+    width: calc(100% - 36px);
+  }
+  .toast {
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    animation: toastIn 0.35s ease, toastOut 0.35s ease 2.5s forwards;
+    box-shadow: var(--shadow);
+  }
+  .toast.success {
+    background: #0d2818;
+    border: 1px solid rgba(46, 213, 115, 0.3);
+    color: var(--success);
+  }
+  .toast.error {
+    background: #2d0f13;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    color: var(--danger);
+  }
+  .toast.info {
+    background: #0d1f2d;
+    border: 1px solid rgba(0, 212, 170, 0.3);
+    color: var(--accent);
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+  }
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .modal-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal-sheet {
+    max-width: 430px;
+    width: 100%;
+    background: var(--bg-secondary);
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .modal-overlay.show .modal-sheet {
+    transform: translateY(0);
+  }
+  .modal-handle {
+    width: 40px; height: 4px;
+    border-radius: 4px;
+    background: var(--fg-dim);
+    margin: 0 auto 16px;
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .modal-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .modal-option:hover { background: var(--bg-elevated); }
+  .modal-option i { font-size: 20px; width: 28px; text-align: center; }
+  .modal-option span { font-size: 14px; font-weight: 500; }
+  .modal-option.danger { color: var(--danger); }
+  .fade-up {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-elevated) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-sm);
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--fg-dim);
+  }
+  .empty-state i { font-size: 48px; margin-bottom: 16px; }
+  .empty-state p { font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  @media (min-width: 431px) {
+    .app-shell {
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell" id="app">
+  <div class="bg-atmosphere">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="page active" id="page-home">
+    <div class="top-bar">
+      <div class="logo">
+        <div class="dot"></div>
+        InstaGram
+      </div>
+      <div class="actions">
+        <button aria-label="Notifications" id="notifBtn">
+          <i class="far fa-bell"></i>
+        </button>
+        <button aria-label="Messages" id="msgBtn">
+          <i class="far fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="postsFeed"></div>
+  </div>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <a class="nav-item active" href="home.html" aria-label="Home">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </a>
+    <a class="nav-item" href="wallet.html" aria-label="Wallet">
+      <i class="fas fa-wallet"></i>
+      <span>Wallet</span>
+    </a>
+    <a class="nav-item upload-btn" href="upload.html" aria-label="Upload">
+      <div class="upload-icon-wrap">
+        <i class="fas fa-plus"></i>
+      </div>
+      <span>Upload</span>
+    </a>
+    <a class="nav-item" href="referral.html" aria-label="Referral">
+      <i class="fas fa-gift"></i>
+      <span>Invite</span>
+    </a>
+    <a class="nav-item" href="profile.html" aria-label="Profile">
+      <i class="fas fa-user"></i>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal-sheet" id="modalSheet" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAmQxNPKANzO8hEng5pdpAR3t7DJtwkG7U",
+  authDomain: "aibmodel.firebaseapp.com",
+  databaseURL: "https://aibmodel-default-rtdb.firebaseio.com",
+  projectId: "aibmodel",
+  storageBucket: "aibmodel.firebasestorage.app",
+  messagingSenderId: "572663832515",
+  appId: "1:572663832515:web:3fea2dac685b9b5f646776"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let currentUserId = null;
+let currentUserData = null;
+
+function initUser() {
+  return new Promise((resolve) => {
+    const stored = localStorage.getItem('instaUserId');
+    if (stored) {
+      currentUserId = stored;
+      db.ref('users/' + currentUserId).once('value', (snap) => {
+        if (snap.exists()) {
+          currentUserData = snap.val();
+          resolve();
+        } else {
+          registerNewUser(resolve);
+        }
+      });
+    } else {
+      registerNewUser(resolve);
+    }
+  });
+}
+
+function registerNewUser(resolve) {
+  const isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData;
+  let userData = {};
+
+  if (isTelegram) {
+    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+    currentUserId = 'tg_' + tgUser.id;
+    userData = {
+      username: tgUser.username || 'tg_user_' + tgUser.id,
+      displayName: tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : ''),
+      avatar: tgUser.photo_url || '',
+      platform: 'telegram',
+      telegramId: String(tgUser.id),
+      bio: '',
+      profileLink: '',
+      createdAt: Date.now()
+    };
+  } else {
+    currentUserId = 'br_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    userData = {
+      username: 'user_' + Math.random().toString(36).substr(2, 8),
+      displayName: 'New User',
+      avatar: '',
+      platform: 'browser',
+      telegramId: '',
+      bio: '',
+      profileLink: '',
+      createdAt: Date.now()
+    };
+  }
+
+  db.ref('users/' + currentUserId).set(userData);
+  localStorage.setItem('instaUserId', currentUserId);
+  currentUserData = userData;
+  resolve();
+}
+
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div');
+  t.className = 'toast ' + type;
+  var icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+  t.innerHTML = '<i class="fas ' + icon + '"></i>' + msg;
+  c.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+}
+
+function showPostOptions(postId) {
+  var mc = document.getElementById('modalContent');
+  mc.innerHTML = '<div class="modal-title">Post Options</div>' +
+    '<div class="modal-option" onclick="reportPost(\'' + postId + '\')"><i class="far fa-flag"></i><span>Report</span></div>' +
+    '<div class="modal-option" onclick="hidePost(\'' + postId + '\')"><i class="far fa-eye-slash"></i><span>Hide this post</span></div>' +
+    '<div class="modal-option" onclick="copyPostLink(\'' + postId + '\')"><i class="fas fa-link"></i><span>Copy link</span></div>' +
+    '<div class="modal-option danger" onclick="closeModalDirect()"><i class="fas fa-times"></i><span>Cancel</span></div>';
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function reportPost(postId) {
+  closeModalDirect();
+  showToast('Post reported', 'info');
+}
+
+function hidePost(postId) {
+  closeModalDirect();
+  var el = document.getElementById('post-' + postId);
+  if (el) el.style.display = 'none';
+  showToast('Post hidden', 'info');
+}
+
+function copyPostLink(postId) {
+  closeModalDirect();
+  navigator.clipboard.writeText(window.location.href + '#post=' + postId).then(function() {
+    showToast('Link copied', 'success');
+  });
+}
+
+function timeAgo(timestamp) {
+  var diff = Date.now() - timestamp;
+  var mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h';
+  var days = Math.floor(hrs / 24);
+  if (days < 7) return days + 'd';
+  return Math.floor(days / 7) + 'w';
+}
+
+function toggleLike(postId, btn) {
+  if (!currentUserId) return;
+  var likeRef = db.ref('posts/' + postId + '/likes/' + currentUserId);
+  likeRef.once('value', function(snap) {
+    if (snap.exists()) {
+      likeRef.remove();
+      btn.classList.remove('liked');
+    } else {
+      likeRef.set(true);
+      btn.classList.add('liked');
+    }
+    updateLikeCount(postId);
+  });
+}
+
+function updateLikeCount(postId) {
+  db.ref('posts/' + postId + '/likes').once('value', function(snap) {
+    var count = snap.exists() ? Object.keys(snap.val()).length : 0;
+    var el = document.getElementById('likes-' + postId);
+    if (el) el.textContent = count + ' likes';
+  });
+}
+
+function toggleBookmark(postId, btn) {
+  if (!currentUserId) return;
+  var bmRef = db.ref('bookmarks/' + currentUserId + '/' + postId);
+  bmRef.once('value', function(snap) {
+    if (snap.exists()) {
+      bmRef.remove();
+      btn.classList.remove('bookmarked');
+      showToast('Removed from saved', 'info');
+    } else {
+      bmRef.set(true);
+      btn.classList.add('bookmarked');
+      showToast('Saved to collection', 'success');
+    }
+  });
+}
+
+function setupDoubleTap(postId, wrap) {
+  var lastTap = 0;
+  var heart = wrap.querySelector('.post-double-tap-heart');
+  wrap.addEventListener('touchend', function(e) {
+    var now = Date.now();
+    if (now - lastTap < 300) {
+      heart.classList.remove('show');
+      void heart.offsetWidth;
+      heart.classList.add('show');
+      var likeBtn = document.getElementById('like-btn-' + postId);
+      if (likeBtn && !likeBtn.classList.contains('liked')) {
+        toggleLike(postId, likeBtn);
+      }
+    }
+    lastTap = now;
+  });
+  wrap.addEventListener('dblclick', function() {
+    heart.classList.remove('show');
+    void heart.offsetWidth;
+    heart.classList.add('show');
+    var likeBtn = document.getElementById('like-btn-' + postId);
+    if (likeBtn && !likeBtn.classList.contains('liked')) {
+      toggleLike(postId, likeBtn);
+    }
+  });
+}
+
+function renderPost(data, postId) {
+  var isLiked = data.likes && data.likes[currentUserId];
+  var likeCount = data.likes ? Object.keys(data.likes).length : 0;
+  var isBookmarked = false;
+
+  db.ref('bookmarks/' + currentUserId + '/' + postId).once('value', function(snap) {
+    var bmBtn = document.getElementById('bm-btn-' + postId);
+    if (bmBtn && snap.exists()) bmBtn.classList.add('bookmarked');
+  });
+
+  var commentsCount = data.comments ? Object.keys(data.comments).length : 0;
+  var commentsPeek = '';
+  if (commentsCount > 0) {
+    var cKeys = Object.keys(data.comments);
+    var firstComment = data.comments[cKeys[0]];
+    commentsPeek = '<div class="post-comments-peek">View all ' + commentsCount + ' comments</div>';
+  }
+
+  var avatarSrc = data.userAvatar || 'https://picsum.photos/seed/' + data.username + '/100/100.jpg';
+  var isVideo = data.mediaType === 'video';
+
+  var mediaHtml = '';
+  if (isVideo && data.mediaUrl) {
+    mediaHtml = '<video src="' + data.mediaUrl + '" playsinline loop muted style="width:100%;height:100%;object-fit:cover;" onmouseenter="this.play()" ontouchstart="this.play()"></video>';
+  } else if (data.mediaUrl) {
+    mediaHtml = '<img src="' + data.mediaUrl + '" alt="Post" loading="lazy">';
+  }
+
+  var html = '<div class="post-card fade-up" id="post-' + postId + '">' +
+    '<div class="post-header">' +
+    '<img class="post-avatar" src="' + avatarSrc + '" alt="' + data.username + '">' +
+    '<div class="post-user-info">' +
+    '<div class="username">' + data.username + '</div>' +
+    (data.location ? '<div class="location">' + data.location + '</div>' : '') +
+    '</div>' +
+    '<button class="post-more" onclick="showPostOptions(\'' + postId + '\')"><i class="fas fa-ellipsis-h"></i></button>' +
+    '</div>' +
+    '<div class="post-image-wrap" id="wrap-' + postId + '">' +
+    mediaHtml +
+    '<div class="post-double-tap-heart"><i class="fas fa-heart"></i></div>' +
+    '</div>' +
+    '<div class="post-actions">' +
+    '<div class="left">' +
+    '<button id="like-btn-' + postId + '" class="' + (isLiked ? 'liked' : '') + '" onclick="toggleLike(\'' + postId + '\', this)"><i class="' + (isLiked ? 'fas' : 'far') + ' fa-heart"></i></button>' +
+    '<button><i class="far fa-comment"></i></button>' +
+    '<button><i class="far fa-paper-plane"></i></button>' +
+    '</div>' +
+    '<button id="bm-btn-' + postId + '" onclick="toggleBookmark(\'' + postId + '\', this)"><i class="' + (isBookmarked ? 'fas' : 'far') + ' fa-bookmark"></i></button>' +
+    '</div>' +
+    '<div class="post-likes" id="likes-' + postId + '">' + likeCount + ' likes</div>' +
+    (data.caption ? '<div class="post-caption"><span class="cap-user">' + data.username + '</span> ' + data.caption + '</div>' : '') +
+    commentsPeek +
+    '<div class="post-time">' + timeAgo(data.createdAt) + '</div>' +
+    '</div>';
+
+  return html;
+}
+
+function loadPosts() {
+  var feed = document.getElementById('postsFeed');
+  feed.innerHTML = '<div style="padding:20px"><div class="skeleton" style="height:400px;margin-bottom:16px"></div><div class="skeleton" style="height:400px"></div></div>';
+
+  db.ref('posts').orderByChild('createdAt').limitToLast(50).on('value', function(snap) {
+    var postsData = snap.val();
+    if (!postsData) {
+      feed.innerHTML = '<div class="empty-state"><i class="far fa-images"></i><p>No posts yet. Be the first to share!</p></div>';
+      return;
+    }
+    var keys = Object.keys(postsData);
+    keys.reverse();
+    var html = '';
+    keys.forEach(function(key) {
+      html += renderPost(postsData[key], key);
+    });
+    feed.innerHTML = html;
+
+    keys.forEach(function(key) {
+      var wrap = document.getElementById('wrap-' + key);
+      if (wrap) setupDoubleTap(key, wrap);
+    });
+  });
+}
+
+function checkNotifBtn() {
+  if (!currentUserId) return;
+  db.ref('notifications/' + currentUserId).orderByChild('read').equalTo(false).on('value', function(snap) {
+    var data = snap.val();
+    var btn = document.getElementById('notifBtn');
+    if (data) {
+      var count = Object.keys(data).length;
+      var badge = btn.querySelector('.badge');
+      if (badge) {
+        badge.textContent = count;
+        badge.style.display = 'flex';
+      } else {
+        badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = count;
+        btn.appendChild(badge);
+      }
+    } else {
+      var badge = btn.querySelector('.badge');
+      if (badge) badge.style.display = 'none';
+    }
+  });
+}
+
+function checkMsgBtn() {
+  if (!currentUserId) return;
+  db.ref('messages/' + currentUserId).orderByChild('read').equalTo(false).on('value', function(snap) {
+    var data = snap.val();
+    var btn = document.getElementById('msgBtn');
+    if (data) {
+      var count = Object.keys(data).length;
+      var badge = btn.querySelector('.badge');
+      if (badge) {
+        badge.textContent = count;
+        badge.style.display = 'flex';
+      } else {
+        badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = count;
+        btn.appendChild(badge);
+      }
+    } else {
+      var badge = btn.querySelector('.badge');
+      if (badge) badge.style.display = 'none';
+    }
+  });
+}
+
+document.getElementById('notifBtn').addEventListener('click', function() {
+  showToast('Notifications opened', 'info');
+});
+
+document.getElementById('msgBtn').addEventListener('click', function() {
+  showToast('Messages opened', 'info');
+});
+
+initUser().then(function() {
+  loadPosts();
+  checkNotifBtn();
+  checkMsgBtn();
+});
+</script>
+</body>
+</html>

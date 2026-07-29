@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>InstaGram - Invite</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-secondary: #111820;
+    --bg-card: #151d28;
+    --bg-elevated: #1a2332;
+    --fg: #e8edf3;
+    --fg-muted: #6b7d94;
+    --fg-dim: #3d4f63;
+    --accent: #00d4aa;
+    --accent-glow: rgba(0, 212, 170, 0.25);
+    --accent-dark: #00a885;
+    --danger: #ff4757;
+    --warning: #ffa502;
+    --success: #2ed573;
+    --border: rgba(255,255,255,0.06);
+    --glass: rgba(17, 24, 32, 0.85);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --radius-full: 9999px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    --shadow-accent: 0 4px 20px rgba(0, 212, 170, 0.3);
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app-shell {
+    max-width: 430px;
+    margin: 0 auto;
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .bg-atmosphere {
+    position: fixed;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    max-width: 430px;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .bg-atmosphere .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: orbFloat 12s ease-in-out infinite;
+  }
+  .bg-atmosphere .orb:nth-child(1) {
+    width: 300px; height: 300px;
+    background: var(--accent);
+    top: -80px; right: -60px;
+  }
+  .bg-atmosphere .orb:nth-child(2) {
+    width: 200px; height: 200px;
+    background: #ff6b6b;
+    bottom: 100px; left: -40px;
+    animation-delay: -4s;
+    opacity: 0.08;
+  }
+  .bg-atmosphere .orb:nth-child(3) {
+    width: 250px; height: 250px;
+    background: #ffd93d;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: -8s;
+    opacity: 0.05;
+  }
+  @keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(20px, -30px) scale(1.1); }
+    66% { transform: translate(-15px, 20px) scale(0.95); }
+  }
+  .page {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 64px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .page::-webkit-scrollbar { display: none; }
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .top-bar .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--fg);
+  }
+  .top-bar .actions { display: flex; gap: 16px; }
+  .top-bar .actions button {
+    background: none; border: none;
+    color: var(--fg); font-size: 20px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .top-bar .actions button:hover { color: var(--accent); }
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border);
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: var(--fg-dim);
+    font-size: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    position: relative;
+    text-decoration: none;
+  }
+  .nav-item i { font-size: 20px; transition: var(--transition); }
+  .nav-item.active { color: var(--accent); }
+  .nav-item.active i { transform: scale(1.1); }
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 24px; height: 2px;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: var(--transition);
+  }
+  .nav-item.active::before { transform: translateX(-50%) scaleX(1); }
+  .nav-item.upload-btn {
+    position: relative;
+    top: -10px;
+  }
+  .nav-item.upload-btn .upload-icon-wrap {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-accent);
+    transition: var(--transition);
+  }
+  .nav-item.upload-btn:hover .upload-icon-wrap {
+    transform: scale(1.08);
+    box-shadow: 0 6px 28px rgba(0, 212, 170, 0.45);
+  }
+  .nav-item.upload-btn i { color: #fff; font-size: 20px; }
+  .nav-item.upload-btn span { display: none; }
+  .referral-hero {
+    margin: 16px 18px;
+    padding: 32px 22px;
+    border-radius: var(--radius);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a0a2e, #0d1b2a);
+    border: 1px solid rgba(255, 107, 107, 0.15);
+  }
+  .referral-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    opacity: 0.08;
+    filter: blur(50px);
+  }
+  .referral-hero .gift-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: inline-block;
+    animation: giftBounce 2s ease-in-out infinite;
+  }
+  @keyframes giftBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .referral-hero h2 {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .referral-hero p {
+    font-size: 13px;
+    color: var(--fg-muted);
+    line-height: 1.5;
+  }
+  .referral-code-box {
+    margin: 16px 18px;
+    padding: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .referral-code-box .code {
+    flex: 1;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+  .referral-code-box .copy-btn {
+    padding: 8px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--fg);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+  .referral-code-box .copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .referral-code-box .copy-btn.copied {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+  }
+  .ref-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0 18px;
+    margin-bottom: 24px;
+  }
+  .ref-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 12px;
+    text-align: center;
+  }
+  .ref-stat-card .stat-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .ref-stat-card .stat-label {
+    font-size: 11px;
+    color: var(--fg-muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    margin-bottom: 14px;
+  }
+  .section-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .ref-tiers { padding: 0 18px; margin-bottom: 20px; }
+  .ref-tier {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    transition: var(--transition);
+  }
+  .ref-tier:hover { border-color: var(--accent); }
+  .ref-tier .tier-level {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .ref-tier .tier-info { flex: 1; }
+  .ref-tier .tier-info .tier-name { font-weight: 600; font-size: 14px; }
+  .ref-tier .tier-info .tier-desc { font-size: 12px; color: var(--fg-muted); margin-top: 2px; }
+  .ref-tier .tier-reward {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--success);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .tx-list { padding: 0 18px; }
+  .tx-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+  }
+  .tx-item:last-child { border-bottom: none; }
+  .tx-icon {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .tx-info { flex: 1; }
+  .tx-info .tx-title { font-size: 14px; font-weight: 600; }
+  .tx-info .tx-date { font-size: 11px; color: var(--fg-dim); margin-top: 2px; }
+  .tx-amount { font-size: 14px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
+  .tx-amount.positive { color: var(--success); }
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    max-width: 400px;
+    width: calc(100% - 36px);
+  }
+  .toast {
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    animation: toastIn 0.35s ease, toastOut 0.35s ease 2.5s forwards;
+    box-shadow: var(--shadow);
+  }
+  .toast.success {
+    background: #0d2818;
+    border: 1px solid rgba(46, 213, 115, 0.3);
+    color: var(--success);
+  }
+  .toast.error {
+    background: #2d0f13;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    color: var(--danger);
+  }
+  .toast.info {
+    background: #0d1f2d;
+    border: 1px solid rgba(0, 212, 170, 0.3);
+    color: var(--accent);
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+  }
+  .fade-up {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--fg-dim);
+  }
+  .empty-state i { font-size: 48px; margin-bottom: 16px; }
+  .empty-state p { font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  @media (min-width: 431px) {
+    .app-shell {
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell" id="app">
+  <div class="bg-atmosphere">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="page active" id="page-referral">
+    <div class="top-bar">
+      <div class="logo">Invite Friends</div>
+      <div class="actions">
+        <button aria-label="Share" onclick="shareReferral()">
+          <i class="fas fa-share-alt"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="referral-hero fade-up">
+      <div class="gift-icon">&#127873;</div>
+      <h2>Earn While You Share</h2>
+      <p>Invite friends and earn up to <strong style="color:var(--accent)">$50</strong> for each referral who joins and makes their first transaction.</p>
+    </div>
+
+    <div class="referral-code-box fade-up">
+      <div class="code" id="refCode">...</div>
+      <button class="copy-btn" id="copyRefBtn" onclick="copyRefCode()">Copy</button>
+    </div>
+
+    <div class="ref-stats fade-up">
+      <div class="ref-stat-card">
+        <div class="stat-num" id="totalReferrals">0</div>
+        <div class="stat-label">Invited</div>
+      </div>
+      <div class="ref-stat-card">
+        <div class="stat-num" id="activeReferrals">0</div>
+        <div class="stat-label">Active</div>
+      </div>
+      <div class="ref-stat-card">
+        <div class="stat-num" id="earnedAmount">$0</div>
+        <div class="stat-label">Earned</div>
+      </div>
+    </div>
+
+    <div class="section-header fade-up">
+      <h3>Reward Tiers</h3>
+    </div>
+    <div class="ref-tiers fade-up">
+      <div class="ref-tier">
+        <div class="tier-level" style="background:rgba(46,213,115,0.15);color:var(--success)">1</div>
+        <div class="tier-info">
+          <div class="tier-name">Starter</div>
+          <div class="tier-desc">1 - 5 referrals</div>
+        </div>
+        <div class="tier-reward">$10 each</div>
+      </div>
+      <div class="ref-tier">
+        <div class="tier-level" style="background:rgba(0,212,170,0.15);color:var(--accent)">2</div>
+        <div class="tier-info">
+          <div class="tier-name">Rising Star</div>
+          <div class="tier-desc">6 - 15 referrals</div>
+        </div>
+        <div class="tier-reward">$20 each</div>
+      </div>
+      <div class="ref-tier">
+        <div class="tier-level" style="background:rgba(255,165,2,0.15);color:var(--warning)">3</div>
+        <div class="tier-info">
+          <div class="tier-name">Influencer</div>
+          <div class="tier-desc">16 - 30 referrals</div>
+        </div>
+        <div class="tier-reward">$35 each</div>
+      </div>
+      <div class="ref-tier">
+        <div class="tier-level" style="background:rgba(255,107,107,0.15);color:#ff6b6b">4</div>
+        <div class="tier-info">
+          <div class="tier-name">Ambassador</div>
+          <div class="tier-desc">31+ referrals</div>
+        </div>
+        <div class="tier-reward">$50 each</div>
+      </div>
+    </div>
+
+    <div class="section-header fade-up" style="margin-top:8px">
+      <h3>Recent Referrals</h3>
+    </div>
+    <div class="tx-list fade-up" id="refList" style="padding-bottom:20px"></div>
+  </div>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <a class="nav-item" href="home.html" aria-label="Home">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </a>
+    <a class="nav-item" href="wallet.html" aria-label="Wallet">
+      <i class="fas fa-wallet"></i>
+      <span>Wallet</span>
+    </a>
+    <a class="nav-item upload-btn" href="upload.html" aria-label="Upload">
+      <div class="upload-icon-wrap">
+        <i class="fas fa-plus"></i>
+      </div>
+      <span>Upload</span>
+    </a>
+    <a class="nav-item active" href="referral.html" aria-label="Referral">
+      <i class="fas fa-gift"></i>
+      <span>Invite</span>
+    </a>
+    <a class="nav-item" href="profile.html" aria-label="Profile">
+      <i class="fas fa-user"></i>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <div class="toast-container" id="toastContainer"></div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAmQxNPKANzO8hEng5pdpAR3t7DJtwkG7U",
+  authDomain: "aibmodel.firebaseapp.com",
+  databaseURL: "https://aibmodel-default-rtdb.firebaseio.com",
+  projectId: "aibmodel",
+  storageBucket: "aibmodel.firebasestorage.app",
+  messagingSenderId: "572663832515",
+  appId: "1:572663832515:web:3fea2dac685b9b5f646776"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let currentUserId = null;
+
+function initUser() {
+  return new Promise((resolve) => {
+    const stored = localStorage.getItem('instaUserId');
+    if (stored) {
+      currentUserId = stored;
+      db.ref('users/' + currentUserId).once('value', (snap) => {
+        if (snap.exists()) {
+          resolve();
+        } else {
+          window.location.href = 'home.html';
+        }
+      });
+    } else {
+      window.location.href = 'home.html';
+    }
+  });
+}
+
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div');
+  t.className = 'toast ' + type;
+  var icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+  t.innerHTML = '<i class="fas ' + icon + '"></i>' + msg;
+  c.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+}
+
+function getReferralCode() {
+  return currentUserId.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
+}
+
+function getTierReward(count) {
+  if (count >= 31) return 50;
+  if (count >= 16) return 35;
+  if (count >= 6) return 20;
+  return 10;
+}
+
+function copyRefCode() {
+  var code = document.getElementById('refCode').textContent;
+  navigator.clipboard.writeText(code).then(function() {
+    var btn = document.getElementById('copyRefBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    showToast('Referral code copied', 'success');
+    setTimeout(function() {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function shareReferral() {
+  var code = document.getElementById('refCode').textContent;
+  var text = 'Join me on InstaGram! Use my referral code: ' + code;
+  if (navigator.share) {
+    navigator.share({ title: 'InstaGram Invite', text: text, url: window.location.href });
+  } else {
+    navigator.clipboard.writeText(text + ' ' + window.location.href).then(function() {
+      showToast('Share link copied', 'success');
+    });
+  }
+}
+
+function timeAgo(timestamp) {
+  var diff = Date.now() - timestamp;
+  var mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  var days = Math.floor(hrs / 24);
+  if (days < 7) return days + 'd ago';
+  return Math.floor(days / 7) + 'w ago';
+}
+
+function loadReferralData() {
+  document.getElementById('refCode').textContent = getReferralCode();
+
+  db.ref('referrals/' + currentUserId).on('value', function(snap) {
+    var data = snap.val();
+    var total = 0;
+    var active = 0;
+    var earned = 0;
+    var listHtml = '';
+
+    if (data) {
+      var keys = Object.keys(data);
+      total = keys.length;
+      var rewardPerRef = getTierReward(total);
+
+      keys.reverse();
+      var shown = 0;
+      keys.forEach(function(key) {
+        var ref = data[key];
+        if (ref.active) active++;
+        if (shown < 10) {
+          listHtml += '<div class="tx-item">' +
+            '<div class="tx-icon" style="background:rgba(0,212,170,0.15);color:var(--accent)"><i class="fas fa-user-plus"></i></div>' +
+            '<div class="tx-info">' +
+            '<div class="tx-title">' + (ref.username || 'User') + '</div>' +
+            '<div class="tx-date">' + timeAgo(ref.joinedAt) + '</div>' +
+            '</div>' +
+            '<div class="tx-amount positive">+$' + rewardPerRef + '</div>' +
+            '</div>';
+          shown++;
+        }
+      });
+      earned = total * rewardPerRef;
+    }
+
+    document.getElementById('totalReferrals').textContent = total;
+    document.getElementById('activeReferrals').textContent = active;
+    document.getElementById('earnedAmount').textContent = '$' + earned;
+
+    var refList = document.getElementById('refList');
+    if (!listHtml) {
+      refList.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>No referrals yet. Share your code to start earning!</p></div>';
+    } else {
+      refList.innerHTML = listHtml;
+    }
+  });
+}
+
+initUser().then(function() {
+  loadReferralData();
+});
+</script>
+</body>
+</html>
